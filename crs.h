@@ -4,6 +4,7 @@
 # include <stdlib.h>
 # include <conio.h>
 # include <stdio.h>
+# include <iomanip>
 
 # include "sqlite3.h"
 
@@ -16,7 +17,7 @@ public:
 
         cout << endl << endl << endl;
 
-        cout << "displaying cars database..." << endl << endl;
+        cout << "******************* CARS DATABASE *******************" << endl << endl;
 
         sqlite3* dbs;
         sqlite3_stmt* stmt;
@@ -37,9 +38,9 @@ public:
             type = sqlite3_column_text(stmt, 2);
             status = sqlite3_column_text(stmt, 3);
 
-            cout << "** name: " << name << "       ";
-            cout << "** price: " << price << "       ";
-            cout << "** type: " << type << "        ";
+            cout << "** name: " << name <<"     ";
+            cout << "** price: " << price <<"     ";
+            cout << "** type: " << type <<"      ";
             cout << "** status: " << status << endl;
         }
 
@@ -57,7 +58,7 @@ public:
 
         cout << endl << endl << endl;
 
-        cout << "displaying users database..." << endl << endl;
+        cout << "******************* USER DATABASE *******************" << endl << endl;
 
         sqlite3* db;
         sqlite3_stmt* stmt;
@@ -94,7 +95,6 @@ public:
         cout << "******************* MODIFY CARS DATABASE *******************" << endl << endl;
         cout << "1. ADD TO DATABASE" << endl;
         cout << "2. DELETE FROM DATABASE" << endl;
-        cout << "3. GO BACK" << endl;
         cout << "ENTER CHOICE: ";
         cin >> choice;
 
@@ -102,7 +102,7 @@ public:
 
             case 1: add_to_cars_database(); break;
             case 2: delete_cars(); break;
-            default: "WRONG CHOICE!";
+            default: cout<<"WRONG CHOICE!";
 
         }
 
@@ -114,6 +114,27 @@ public:
         // DEFINE THIS FUNCTION
 
         cout << "modify users database...." << endl;
+
+        char* err;
+        char name[50];
+        sqlite3* db;
+        sqlite3_stmt* stmt;
+        sqlite3_open("database.db", &db);
+        char operation[150];
+        sprintf(operation , "delete from users where name like '%s'",name);
+
+        int res = sqlite3_exec(db, operation, NULL, NULL, &err);
+
+        if(res != SQLITE_OK){
+            cout << "ERROR... " << err;
+        }else{
+            cout << "DATA DELETED SUCCESSFULLY..." << endl << endl;
+        }
+
+        sqlite3_close(db);
+        cout << endl << endl;
+
+
     }
 
 
@@ -124,20 +145,55 @@ public:
         char type[50];
         char status[50];
         int price;
+        int i;
+        char choice = 'Y';
 
-        cout << "ENTER NAME: ";
-        cin >> name;
+        while (choice == 'Y')
+        {
 
-        cout << "ENTER PRICE: ";
-        cin >> price;
 
-        cout << "ENTER TYPE: ";
-        cin >> type;
 
-        cout << "ENTER STATUS: ";
-        cin >> status;
+            cout << "ENTER NAME: ";
+            cin >> name;
 
-        add_cars(name, price, type, status);
+            for(i=0; name[i] != '\0'; i++)
+            {
+                if(name[i] == '_')
+                {
+                    name[i] = ' ';
+                }
+            }
+
+            cout << "ENTER PRICE: ";
+            cin >> price;
+
+            cout << "ENTER TYPE: ";
+            cin >> type;
+
+            for(i=0; type[i] != '\0'; i++)
+            {
+                if(type[i] == '_')
+                {
+                    type[i] = ' ';
+                }
+            }
+
+            cout << "ENTER STATUS: ";
+            cin >> status;
+
+            for(i=0; status[i] != '\0'; i++)
+            {
+                if(status[i] == '_')
+                {
+                    status[i] = ' ';
+                }
+            }
+
+            add_cars(name, price, type, status);
+
+            cout << "ADD MORE?(Y/N)";
+            cin >> choice;
+        }
 
         modify_cars_db();
 
@@ -175,6 +231,38 @@ public:
         // DEFINE THIS FUNCTION
 
         cout << "delete cars database...." << endl;
+        char* err;
+        char name[50];
+        sqlite3* dbs;
+        sqlite3_stmt* stmt;
+
+        cout << "\nEnter name of the car: ";
+        cin >> name;
+
+        for(int i=0; name[i] != '\0'; i++)
+        {
+            if(name[i] == '_')
+            {
+                name[i] = ' ';
+            }
+        }
+
+        sqlite3_open("carsdatabase.db", &dbs);
+
+        char operation[150];
+        sprintf(operation , "delete from carsTable where name like '%s'",name);
+
+        int res = sqlite3_exec(dbs, operation, NULL, NULL, &err);
+
+        if(res != SQLITE_OK){
+            cout << "ERROR... " << err;
+        }else{
+            cout << "DATA DELETED SUCCESSFULLY..." << endl << endl;
+        }
+
+        sqlite3_close(dbs);
+        cout << endl << endl;
+
     }
 
 
@@ -285,37 +373,50 @@ public:
 
 class user{
 
-    string dummy_id = "user";
-    string dummy_pass = "user";
+    const unsigned char* iden;
+    const unsigned char* password;
 
 public:
 
-    bool user_auth(string id, string pass){
+    bool user_auth(const char* id[30],const char* pass[50]){
+
+        int i,j;
+        sqlite3* db;
+        sqlite3_stmt* stmt;
+        sqlite3_open("database.db", &db);
+
+        sqlite3_prepare_v2(db, "select uid, pwd from users", -1, &stmt, 0);
         // A FUNCTION TO CHECK IF THE USER EXISTS IN THE USER DATABASE BY COMPARING ID AND PASSWORD.
 
-        // DUMMY IMPLEMNTATION
-        if((id == dummy_id) && (pass == dummy_pass))
-            return true;
+        while(sqlite3_step(stmt) != SQLITE_DONE)
+        {
+            iden = sqlite3_column_text(stmt, 0);
+            password = sqlite3_column_text(stmt, 1);
+            i = strcmpi (id , iden);
+            j = strcmpi (pass , password);
+            if(i == 0 && j == 0)
+                return true;
 
-        else if ((id == dummy_id) && (pass != dummy_pass)){
-            cout << "WRONG PASSWORD!" << endl;
-            return false;
+            else if (i == 0 && j != 0){
+                cout << "WRONG PASSWORD!" << endl;
+                return false;
+
+            }
+
+            else{
+                cout << "THE USER DOES NOT EXIST!" << endl;
+                return false;
+            }
 
         }
-
-        else{
-            cout << "THE USER DOES NOT EXIST!" << endl;
-            return false;
-        }
-    }
-
-
+        sqlite3_close(db);
+}
 
 
 
     void show_user_menu(){
         int choice;
-        database db;
+
 
         cout << endl << endl << endl;
         cout << "******************* USER MENU *******************" << endl << endl;
@@ -355,6 +456,7 @@ public:
         if (choice == 'y')
             show_user_menu();
     }
+
 
 
 };
@@ -429,21 +531,23 @@ public:
         while (attempts >= 0){
 
             cout << "ENTER PASSWORD: ";
-            int i;
-            char temp;
 
             pass_input(pass);
 
-            if(adm.authenticate(pass)){
+            if(adm.authenticate(pass))
+            {
                 adm.show_admin_menu();
                 break;
             }
 
             else
-            	cout << endl;
+            {
+                cout << endl;
                 cout << "UNSUCCESSFUL! " << attempts << " ATTEMPTS LEFT!" << endl;
+            }
 
             -- attempts;
+
 
         }
 
