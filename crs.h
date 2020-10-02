@@ -1,3 +1,4 @@
+  
 # include <iostream>
 # include <string>
 # include <cstring>
@@ -378,38 +379,51 @@ class user{
 
 public:
 
-    bool user_auth(const char* id[30],const char* pass[50]){
+    bool user_auth(char* id, char* pass){
+        // A FUNCTION TO CHECK IF THE USER EXISTS IN THE USER DATABASE BY COMPARING ID AND PASSWORD.
 
-        int i,j;
+        // int i,j;
         sqlite3* db;
         sqlite3_stmt* stmt;
         sqlite3_open("database.db", &db);
 
+        bool found = false;
+        bool flag = false;
+
         sqlite3_prepare_v2(db, "select uid, pwd from users", -1, &stmt, 0);
-        // A FUNCTION TO CHECK IF THE USER EXISTS IN THE USER DATABASE BY COMPARING ID AND PASSWORD.
 
         while(sqlite3_step(stmt) != SQLITE_DONE)
         {
+
             iden = sqlite3_column_text(stmt, 0);
             password = sqlite3_column_text(stmt, 1);
-            i = strcmpi (id , iden);
-            j = strcmpi (pass , password);
-            if(i == 0 && j == 0)
-                return true;
 
-            else if (i == 0 && j != 0){
-                cout << "WRONG PASSWORD!" << endl;
-                return false;
+            const char* curr_id =  reinterpret_cast<const char*>(iden);
+            const char* curr_pass = reinterpret_cast<const char*>(password);
 
+            int id_match = strcmpi(id, curr_id);
+            int pass_match = strcmpi(pass, curr_pass);
+
+            if((id_match == 0) && (pass_match == 0)) {
+                cout << "*** LOGIN SUCCESSFUL ***" << endl;
+                found = true;
+                break;
             }
 
-            else{
-                cout << "THE USER DOES NOT EXIST!" << endl;
-                return false;
+            else if((id_match == 0) && (pass_match != 0)) {
+                cout << "WRONG PASSWORD...." << endl;
+                flag = true;
             }
-
         }
+
+        if(!found && !flag) {
+            cout << "USER NOT FOUND..." << endl;
+        }
+
+
         sqlite3_close(db);
+
+        return found;
 }
 
 
@@ -562,7 +576,7 @@ public:
     void user_login() {
         user us;
 
-        string id;
+        char id[50];
         char password[50];
 
         cout << "ENTER USER ID: ";
@@ -646,6 +660,4 @@ public:
         password[p]='\0';
 
     }
-
 };
-
