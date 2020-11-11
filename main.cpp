@@ -43,7 +43,19 @@ void create_cars_database(){
     }
 
 }
+  Void create_receipt_database(){
 
+Char* err;
+Sqlite3* dbms;
+Sqlite3_stmt* stmt;
+Sqlite3_open(“receiptdb.db”, &dbms);
+
+int response = sqlite3_exec(dbms, “CREATE TABLE IF NOT EXISTS receipt_table (name VARCHAR(20), Total_price INT, From_date INT, Till_date INT);”, NULL, NULL, &err);
+
+if(response != SQLITE_OK){
+    cout  << “Error” << err;
+}
+}
 
 int main(){
 
